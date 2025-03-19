@@ -1,0 +1,98 @@
+/**
+ * src/styles/settings.scss
+ *
+ * Configures SASS variables and Vuetify overwrites
+ */
+
+// https://vuetifyjs.com/features/sass-variables/`
+// @use 'vuetify/settings' with (
+//   $color-pack: false
+// );
+
+@use "./fonts.css";
+
+
+$body-font: "Space Grotesk", sans-serif;
+
+@use "vuetify" with (
+  $heading-font-family: $body-font,
+  $body-font-family: $body-font
+);
+
+html {
+  font-size: 16px !important;
+}
+
+.text-h1 {
+  font-family: $body-font;
+  font-size: 2.75rem !important;
+  font-weight: 700 !important;
+  font-style: italic !important;
+  line-height: 3.025rem;
+}
+
+.text-h2 {
+  font-family: $body-font;
+  font-size: 2.25rem !important;
+  font-weight: 700 !important;
+  font-style: italic !important;
+  line-height: 2.475rem;
+}
+
+.text-h3 {
+  font-family: $body-font;
+  font-size: 1.833rem !important;
+  font-weight: 700 !important;
+  font-style: italic !important;
+  line-height: 2.107rem;
+}
+
+.text-h4 {
+  font-family: $body-font;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  font-style: italic !important;
+  line-height: 1.8rem;
+}
+
+.text-h5 {
+  font-family: $body-font;
+  font-size: 1.208rem !important;
+  font-weight: 700 !important;
+  font-style: italic !important;
+}
+
+.text-h6 {
+  font-family: $body-font;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  font-style: italic !important;
+}
+
+.text-subtitle-1 {
+  font-family: $body-font;
+  font-size: 1.208rem !important;
+  font-weight: 500 !important;
+  font-style: normal !important;
+}
+
+.text-subtitle-2 {
+  font-family: $body-font;
+  font-size: 0.833rem !important;
+  font-weight: 500 !important;
+  font-style: normal !important;
+}
+
+.text-body-1 {
+  font-family: $body-font;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  font-style: normal !important;
+}
+
+.text-body-2 {
+  font-family: $body-font;
+  font-size: 0.833rem !important;
+  font-weight: 500 !important;
+  font-style: normal !important;
+}

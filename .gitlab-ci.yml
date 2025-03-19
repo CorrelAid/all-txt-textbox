@@ -1,0 +1,86 @@
+stages:
+  - Build
+  - Deploy Live
+
+image: docker:24
+
+before_script:
+  - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY --username $CI_REGISTRY_USER --password-stdin  || echo "No Docker available"
+
+build_api:
+  stage: Build
+  services:
+    - docker:dind
+  script:
+    - docker pull $CI_REGISTRY_IMAGE/api:latest || true
+    - docker pull $CI_REGISTRY_IMAGE/api:cache || true
+    - >
+      docker build
+      --target base
+      --cache-from $CI_REGISTRY_IMAGE/api:cache
+      --tag $CI_REGISTRY_IMAGE/api:cache
+      ./backend
+    - >
+      docker build
+      --target deploy
+      --cache-from $CI_REGISTRY_IMAGE/api:latest
+      --tag $CI_REGISTRY_IMAGE/api:$CI_COMMIT_SHORT_SHA
+      --tag $CI_REGISTRY_IMAGE/api:latest
+      --label "org.opencontainers.image.title=$CI_PROJECT_TITLE"
+      --label "org.opencontainers.image.url=$CI_PROJECT_URL"
+      --label "org.opencontainers.image.created=$CI_JOB_STARTED_AT"
+      --label "org.opencontainers.image.revision=$CI_COMMIT_SHA"
+      --label "org.opencontainers.image.version=$CI_COMMIT_REF_NAME"
+      ./backend
+    - docker push --all-tags $CI_REGISTRY_IMAGE/api
+
+
+build_webapp:
+  stage: Build
+  services:
+    - docker:dind
+  script:
+    - docker pull $CI_REGISTRY_IMAGE/webapp:latest || true
+    - docker pull $CI_REGISTRY_IMAGE/webapp:cache || true
+    - >
+      docker build
+      --target base
+      --cache-from $CI_REGISTRY_IMAGE/webapp:cache
+      --tag $CI_REGISTRY_IMAGE/webapp:cache
+      ./webapp
+    - >
+      docker build
+      --target deploy
+      --cache-from $CI_REGISTRY_IMAGE/webapp:latest
+      --tag $CI_REGISTRY_IMAGE/webapp:$CI_COMMIT_SHORT_SHA
+      --tag $CI_REGISTRY_IMAGE/webapp:latest
+      --label "org.opencontainers.image.title=$CI_PROJECT_TITLE"
+      --label "org.opencontainers.image.url=$CI_PROJECT_URL"
+      --label "org.opencontainers.image.created=$CI_JOB_STARTED_AT"
+      --label "org.opencontainers.image.revision=$CI_COMMIT_SHA"
+      --label "org.opencontainers.image.version=$CI_COMMIT_REF_NAME"
+      ./webapp
+    - docker push --all-tags $CI_REGISTRY_IMAGE/webapp
+
+
+live:
+  image: docker:24
+  stage: Deploy Live
+  when: manual
+  before_script:
+    - eval $(ssh-agent -s)
+    - echo "$SSH_DEPLOY_KEY" | base64 -d | tr -d '\r' | ssh-add - > /dev/null
+    - echo "StrictHostKeyChecking no" >> $(find /etc -iname ssh_config)
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+  script:
+    - docker context create remote_swarm --docker "host=ssh://deploy@${SSH_HOST}"
+    - echo "$CI_REGISTRY_PASSWORD" | docker --context remote_swarm login $CI_REGISTRY --username $CI_REGISTRY_USER --password-stdin  || echo "No Docker available"
+    - echo "$ALL_TXT_BACKEND_DATABASE" > /tmp/ALL_TXT_BACKEND_DATABASE
+    - echo "$ALL_TXT_BACKEND_MIGRATION" > /tmp/ALL_TXT_BACKEND_MIGRATION
+    - echo "$ALL_TXT_BACKEND_REDIS" > /tmp/ALL_TXT_BACKEND_REDIS
+    - docker --context remote_swarm stack deploy --prune --with-registry-auth --resolve-image=always --compose-file=docker-swarm.yaml all_txt
+  needs:
+    - job: build_api
+    - job: build_webapp
+

@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  database:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=all_txt
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=all_txt
+    ports:
+      - 5432:5432
+
+  redis:
+    image: redis:7
+    ports:
+      - 6379:6379
+    command: redis-server --requirepass pass
